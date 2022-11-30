@@ -1,10 +1,40 @@
 use std::str::FromStr;
+use crate::ast::{Expr, OpCode, Stmt, LangInt};
 
 grammar;
 
-pub Term: i32 = {
-    <n:Num> => n,
-    "(" <t:Term> ")" => t,
+Expr: Box<Expr> = {
+    Expr ExprOp ExprHi => Box::new(Expr::BinaryOp(<>)),
+    ExprHi,
 };
 
-Num: i32 = <s:r"[0-9]+"> => i32::from_str(s).unwrap();
+// Required to disambiguate grammar
+ExprHi: Box<Expr> = {
+    Num => Box::new(Expr::Number(<>)),
+    "input_int" "(" ")" => Box::new(Expr::InputInt),
+    ExprOp ExprHi => Box::new(Expr::UnaryOp(<>)),
+    "(" <Expr> ")" => Box::new(Expr::Group(<>)),
+};
+
+ExprOp: OpCode = {
+    "+" => OpCode::Add,
+    "-" => OpCode::Sub,
+};
+
+Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
+
+Stmt: Stmt = {
+    "print" "(" <Expr> ")" => Stmt::Print(<>),
+    Expr => Stmt::Expr(<>),
+
+};
+
+pub LangInt: LangInt = {
+    <mut stmts:(<Stmt> "\n")*> <e:Stmt?> => match e {
+        None => LangInt {stmts: stmts},
+        Some(e) => {
+            stmts.push(e);
+            LangInt {stmts: stmts}
+        },
+    }
+};

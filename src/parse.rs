@@ -8,6 +8,7 @@ mod test {
 
     #[test]
     fn smoketest() {
-        assert!(grammar::TermParser::new().parse("42").is_ok());
+        dbg!(grammar::LangIntParser::new().parse("42"));
+        assert!(grammar::LangIntParser::new().parse("42").is_ok());
     }
 }
