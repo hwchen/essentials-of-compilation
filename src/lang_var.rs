@@ -40,7 +40,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn smoketest() {
+    fn smoketest_parser() {
         assert!(lang_var::LangVarParser::new().parse("y = 10").is_ok());
         assert!(lang_var::LangVarParser::new().parse("print(-y)").is_ok());
 

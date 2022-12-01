@@ -30,7 +30,7 @@ Stmt: Stmt = {
 };
 
 pub LangInt: LangInt = {
-    <mut stmts:(<Stmt> "\n")*> <e:Stmt?> => match e {
+    <mut stmts:(<Stmt> ";")*> <e:Stmt?> => match e {
         None => LangInt {stmts: stmts},
         Some(e) => {
             stmts.push(e);

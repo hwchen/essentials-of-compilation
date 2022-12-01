@@ -36,7 +36,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn smoketest() {
-        assert!(lang_int::LangIntParser::new().parse("42").is_ok());
+    fn smoketest_parser() {
+        assert!(lang_int::LangIntParser::new().parse("42;42").is_ok());
     }
 }
