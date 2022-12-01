@@ -1,0 +1,42 @@
+use std::str::FromStr;
+use crate::lang_var::ast::{Expr, OpCode, Stmt, LangVar};
+
+grammar;
+
+Expr: Box<Expr> = {
+    Expr ExprOp ExprHi => Box::new(Expr::BinaryOp(<>)),
+    ExprHi,
+};
+
+// Required to disambiguate grammar
+ExprHi: Box<Expr> = {
+    Num => Box::new(Expr::Number(<>)),
+    "input_int" "(" ")" => Box::new(Expr::InputInt),
+    ExprOp ExprHi => Box::new(Expr::UnaryOp(<>)),
+    "(" <Expr> ")" => Box::new(Expr::Group(<>)),
+    Var => Box::new(Expr::Var(<>)),
+};
+
+ExprOp: OpCode = {
+    "+" => OpCode::Add,
+    "-" => OpCode::Sub,
+};
+
+Num: i64 = <s:r"[0-9]+"> => i64::from_str(s).unwrap();
+Var: String = <s:r"[a-zA-Z_]+"> => s.to_string();
+
+Stmt: Stmt = {
+    "print" "(" <Expr> ")" => Stmt::Print(<>),
+    Expr => Stmt::Expr(<>),
+    <Var> "=" <Expr> => Stmt::Assign(<>),
+};
+
+pub LangVar: LangVar = {
+    <mut stmts:(<Stmt> ";")*> <e:Stmt?> => match e {
+        None => LangVar {stmts: stmts},
+        Some(e) => {
+            stmts.push(e);
+            LangVar {stmts: stmts}
+        },
+    }
+};
