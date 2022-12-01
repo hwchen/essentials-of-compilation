@@ -1,5 +1,5 @@
 [package]
-name = "iroh-lang"
+name = "essentials-of-compilation"
 version = "0.1.0"
 edition = "2021"
 

@@ -119,6 +119,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "essentials-of-compilation"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "lalrpop",
+ "lalrpop-util",
+ "regex",
+]
+
+[[package]]
 name = "fixedbitset"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -158,16 +168,6 @@ checksum = "1885e79c1fc4b10f0e172c475f458b7f7b93061064d98c3293e98c5ba0c8b399"
 dependencies = [
  "autocfg",
  "hashbrown",
-]
-
-[[package]]
-name = "iroh-lang"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "lalrpop",
- "lalrpop-util",
- "regex",
 ]
 
 [[package]]
