@@ -75,6 +75,9 @@ pub mod interp {
 }
 
 /// Partial Evaluator
+///
+/// Need to have the various pe_unary, pe_binary; if just doing match statements in pe_exp, won't
+/// recurse in fine-grained enough fashion (need to think about this more)
 pub mod pe {
     use super::ast::*;
 
@@ -93,23 +96,31 @@ pub mod pe {
 
     fn pe_exp(e: &Expr) -> Expr {
         match e {
-            Expr::BinaryOp(ref lhs, op, ref rhs) => match (lhs, rhs) {
-                (box Expr::Number(n), box Expr::Number(m)) => match op {
-                    OpCode::Add => Expr::Number(n + m),
-                    OpCode::Sub => Expr::Number(n - m),
-                },
-                _ => Expr::BinaryOp(Box::new(pe_exp(&*lhs)), *op, Box::new(pe_exp(&*rhs))),
-            },
-            Expr::UnaryOp(op, e) => match **e {
-                Expr::Number(n) => match op {
-                    OpCode::Add => Expr::Number(n),
-                    OpCode::Sub => Expr::Number(n * -1),
-                },
-                _ => Expr::UnaryOp(*op, Box::new(pe_exp(&*e))),
-            },
+            Expr::BinaryOp(ref lhs, op, ref rhs) => pe_binary(&pe_exp(lhs), *op, &pe_exp(rhs)),
+            Expr::UnaryOp(op, e) => pe_unary(*op, &pe_exp(e)),
             Expr::Group(e) => pe_exp(&*e),
             Expr::Number(_) => e.clone(),
             Expr::InputInt => e.clone(),
+        }
+    }
+
+    fn pe_unary(op: OpCode, r: &Expr) -> Expr {
+        match r {
+            Expr::Number(n) => match op {
+                OpCode::Sub => Expr::Number(n * -1),
+                _ => r.clone(),
+            },
+            _ => r.clone(),
+        }
+    }
+
+    fn pe_binary(r1: &Expr, op: OpCode, r2: &Expr) -> Expr {
+        match (r1, r2) {
+            (&Expr::Number(n), &Expr::Number(m)) => match op {
+                OpCode::Add => Expr::Number(n + m),
+                OpCode::Sub => Expr::Number(n - m),
+            },
+            _ => Expr::BinaryOp(Box::new(r1.clone()), op, Box::new(r2.clone())),
         }
     }
 }
@@ -147,7 +158,6 @@ mod test {
             let tree = lang_int::LangIntParser::new().parse(input).unwrap();
             let tree = pe::pe(&tree);
             dbg!(&tree);
-            panic!();
             let mut output_buf = std::io::Cursor::new(Vec::new());
             interp::interp(tree, &mut output_buf);
             assert_eq!(output_buf.into_inner(), b"42\n");
