@@ -1,3 +1,5 @@
+#![feature(box_patterns)]
+
 pub mod lang_int;
 pub mod lang_var;
 
