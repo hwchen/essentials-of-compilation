@@ -78,6 +78,9 @@ pub mod interp {
 ///
 /// Need to have the various pe_unary, pe_binary; if just doing match statements in pe_exp, won't
 /// recurse in fine-grained enough fashion (need to think about this more)
+///
+/// Ah, each of `binary` and `unary` expr need to be able to fold completely to one expr, so each
+/// one needs an individual recursive fn, can't just rely on pe_exp.
 pub mod pe {
     use super::ast::*;
 
