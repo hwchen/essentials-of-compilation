@@ -57,27 +57,30 @@ pub mod interp {
         } else if stmts.len() == 1 {
             return interp_stmt(&stmts[0], env, &[], wtr);
         } else {
-            return interp_stmt(&stmts[1], env, &stmts[1..], wtr);
+            return interp_stmt(&stmts[0], env, &stmts[1..], wtr);
         }
     }
 
     fn interp_stmt<W: Write>(s: &Stmt, env: &mut Env, cont: &[Stmt], wtr: &mut W) {
         match s {
-            Stmt::Print(e) => writeln!(wtr, "{}", interp_exp(e)).unwrap(),
+            Stmt::Print(e) => writeln!(wtr, "{}", interp_exp(e, env)).unwrap(),
             Stmt::Expr(e) => {
-                interp_exp(e);
+                interp_exp(e, env);
             }
-            Stmt::Assign(_, _) => todo!("langvar"),
+            Stmt::Assign(var, exp) => {
+                let rhs = interp_exp(exp, env);
+                _ = env.insert(var.clone(), rhs);
+            }
         }
 
         interp_stmts(cont, env, wtr)
     }
 
-    fn interp_exp(e: &Expr) -> i64 {
+    fn interp_exp(e: &Expr, env: &mut Env) -> i64 {
         match e {
             Expr::BinaryOp(lhs, op, rhs) => {
-                let lhs = interp_exp(lhs);
-                let rhs = interp_exp(rhs);
+                let lhs = interp_exp(lhs, env);
+                let rhs = interp_exp(rhs, env);
 
                 match op {
                     OpCode::Add => lhs + rhs,
@@ -85,13 +88,13 @@ pub mod interp {
                 }
             }
             Expr::UnaryOp(op, e) => match op {
-                OpCode::Add => interp_exp(e),
-                OpCode::Sub => interp_exp(e) * -1,
+                OpCode::Add => interp_exp(e, env),
+                OpCode::Sub => interp_exp(e, env) * -1,
             },
-            Expr::Group(e) => interp_exp(e),
+            Expr::Group(e) => interp_exp(e, env),
             Expr::Number(n) => *n,
             Expr::InputInt => input_int(),
-            Expr::Var(_) => todo!("langvar"),
+            Expr::Var(var) => *env.get(var).expect(&format!("variable {var} undeclared")),
         }
     }
 }
@@ -111,5 +114,15 @@ mod test {
         assert!(lang_var::LangVarParser::new()
             .parse("y = 10;print(-y);")
             .is_ok());
+    }
+
+    #[test]
+    fn smoketest_interp() {
+        let tree = lang_var::LangVarParser::new()
+            .parse("x = 40; y = 2; print(x + y);")
+            .unwrap();
+        let mut output_buf = std::io::Cursor::new(Vec::new());
+        interp::interp(tree, &mut output_buf);
+        assert_eq!(output_buf.into_inner(), b"42\n");
     }
 }
