@@ -32,11 +32,5 @@ Stmt: Stmt = {
 };
 
 pub LangVar: LangVar = {
-    <mut stmts:(<Stmt> ";")*> <e:Stmt?> => match e {
-        None => LangVar {stmts: stmts},
-        Some(e) => {
-            stmts.push(e);
-            LangVar {stmts: stmts}
-        },
-    }
+    <stmts:(<Stmt> ";")*> => LangVar {stmts: stmts},
 };
