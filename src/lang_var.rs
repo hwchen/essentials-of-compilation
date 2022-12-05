@@ -35,6 +35,67 @@ pub mod ast {
     }
 }
 
+pub mod interp {
+    use std::collections::HashMap;
+    use std::io::Write;
+
+    use super::ast::*;
+
+    use crate::input_int;
+
+    /// map of variable to value, for looking up assignments
+    pub type Env = HashMap<String, i64>;
+
+    pub fn interp<W: Write>(p: LangVar, wtr: &mut W) {
+        let mut env = HashMap::new();
+        interp_stmts(&p.stmts, &mut env, wtr);
+    }
+
+    pub fn interp_stmts<W: Write>(stmts: &[Stmt], env: &mut Env, wtr: &mut W) {
+        if stmts.is_empty() {
+            return; // return 0?
+        } else if stmts.len() == 1 {
+            return interp_stmt(&stmts[0], env, &[], wtr);
+        } else {
+            return interp_stmt(&stmts[1], env, &stmts[1..], wtr);
+        }
+    }
+
+    fn interp_stmt<W: Write>(s: &Stmt, env: &mut Env, cont: &[Stmt], wtr: &mut W) {
+        match s {
+            Stmt::Print(e) => writeln!(wtr, "{}", interp_exp(e)).unwrap(),
+            Stmt::Expr(e) => {
+                interp_exp(e);
+            }
+            Stmt::Assign(_, _) => todo!("langvar"),
+        }
+
+        interp_stmts(cont, env, wtr)
+    }
+
+    fn interp_exp(e: &Expr) -> i64 {
+        match e {
+            Expr::BinaryOp(lhs, op, rhs) => {
+                let lhs = interp_exp(lhs);
+                let rhs = interp_exp(rhs);
+
+                match op {
+                    OpCode::Add => lhs + rhs,
+                    OpCode::Sub => lhs - rhs,
+                }
+            }
+            Expr::UnaryOp(op, e) => match op {
+                OpCode::Add => interp_exp(e),
+                OpCode::Sub => interp_exp(e) * -1,
+            },
+            Expr::Group(e) => interp_exp(e),
+            Expr::Number(n) => *n,
+            Expr::InputInt => input_int(),
+            Expr::Var(_) => todo!("langvar"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
